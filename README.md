@@ -1,5 +1,7 @@
 # GirlSocial - A new social network with the focus on inclusivity
 
+⚠️ WARNING: Very early in development! The app is NOT finished at all!
+
 GirlSocial will be an open source social platform unlike any other - with a focus on inclusivity.
 
 You will be able to use GirlSocial air-gapped - like any existing social network, or you'll be able to enable integrations with services like pronouns.page and the software will try it's hardest to avoid making other people uncomfortable.
