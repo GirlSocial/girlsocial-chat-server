@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
+import { useEffect, useState } from "react";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -12,10 +13,28 @@ const geistMono = Geist_Mono({
 });
 
 export default function Home() {
+  const [loginStatus, setLoginStatus] = useState<string>("Loading...");
+
+  useEffect(() => {
+    fetch('/api/auth/status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.username) {
+          setLoginStatus(`Logged in as ${data.username}`);
+        } else {
+          setLoginStatus("Not logged in");
+        }
+      })
+      .catch(() => setLoginStatus("Not logged in"));
+  }, []);
+
   return (
     <div
       className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
     >
+      <div className="row-start-1 text-sm font-[family-name:var(--font-geist-mono)]">
+        {loginStatus}
+      </div>
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <Image
           className="dark:invert"
