@@ -1,25 +1,45 @@
 import {MongoClient} from "mongodb";
-import {generateToken, hashPassword, verifyPassword} from "@/components/backend/password";
+import {hashPassword, verifyPassword} from "@/components/backend/password";
+import {createSession} from "@/components/backend/sessions";
 
-export async function newUser(username: string, password: string) {
+export async function newUser(username: string, password: string): Promise<{
+    success: false;
+} | {
+    success: true;
+    token: string;
+}> {
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
 
-    let passwd = await hashPassword(password);
-
+    // Check if the user exists
     let users = client.db('GirlSocial').collection('users');
     if (await users.countDocuments({'username': {'$eq': username}}) > 0) {
         await client.close();
-        return 'Account already exists.';
+        return {success: false};
     }
 
+    // Hash password
+    let passwd = await hashPassword(password);
+
+    // Insert user
     await users.insertOne({
         username: username,
         password: passwd
     });
 
     await client.close();
-    return 'Account created successfully.';
+
+    // Create session for new user
+    const session = await createSession(username);
+
+    if (!session) {
+        return {success: false};
+    }
+
+    return {
+        success: true,
+        token: session
+    };
 }
 
 export async function loginUser(username: string, password: string) {
@@ -27,14 +47,11 @@ export async function loginUser(username: string, password: string) {
     await client.connect();
 
     let passwd = await hashPassword(password);
-    console.log('Password:',passwd);
 
     let users = client.db('GirlSocial').collection('users');
-    let tokens = client.db('GirlSocial').collection('tokens');
     let user = await users.findOne({
         username
     });
-    console.log(user);
 
     if (!user) {
         await client.close();
@@ -43,16 +60,14 @@ export async function loginUser(username: string, password: string) {
 
     if (!await verifyPassword(password, user.password)) {
         await client.close();
-        return ;
+        return null;
     }
 
-    let token = generateToken();
-    await tokens.insertOne({
-        userID: user._id,
-        token
-    });
-
-    console.log(token);
+    let token = await createSession(username);
+    if (!token) {
+        await client.close();
+        return null;
+    }
 
     await client.close();
     return token;
@@ -67,22 +82,3 @@ export async function userExists(username: string) {
     return exists;
 }
 
-export async function getUserByToken(token: string) {
-    const client = new MongoClient(process.env.MONGODB_URI!);
-    await client.connect();
-
-    let tokens = client.db('GirlSocial').collection('tokens');
-    let users = client.db('GirlSocial').collection('users');
-    
-    const tokenDoc = await tokens.findOne({ token });
-    if (!tokenDoc) {
-        await client.close();
-        return null;
-    }
-
-    const user = await users.findOne({ _id: tokenDoc.userID });
-    await client.close();
-    
-    if (!user) return null;
-    return { username: user.username };
-}

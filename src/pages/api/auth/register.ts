@@ -21,18 +21,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const register = await newUser(username, password);
 
-    if (register !== "Account created successfully.") {
+    if (!register.success) {
         res.status(400).json({error: `An error occurred: ${register}`});
         return;
     }
 
-    const token = await loginUser(username, password);
-    if (!token) {
-        res.status(401).json({error: `An error occurred: ${token}`});
-        return;
-    }
-
-    res.setHeader("Set-Cookie", `token=${token}; Secure; SameSite=Strict; HttpOnly; Path=/`);
+    res.setHeader("Set-Cookie", `token=${register.token}; Secure; SameSite=Strict; HttpOnly; Path=/`);
 
     return res.status(204).end();
 }

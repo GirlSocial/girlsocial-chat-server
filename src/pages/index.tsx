@@ -2,11 +2,14 @@ import {useEffect, useState} from "react";
 import Main from "@/components/frontend/Main";
 import {Button, Stack, Typography} from "@mui/joy";
 import Link from "next/link";
+import {useRouter} from "next/router";
 
 export default function Home() {
     const [loginStatus, setLoginStatus] = useState<string>("Loading...");
 
-    useEffect(() => {
+    const router = useRouter();
+
+    const refreshStatus = () => {
         fetch('/api/auth/status')
             .then(res => res.json())
             .then(data => {
@@ -17,11 +20,15 @@ export default function Home() {
                 }
             })
             .catch(() => setLoginStatus("Not logged in"));
+    }
+
+    useEffect(() => {
+       refreshStatus();
     }, []);
 
     const logOut = () => {
-        document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        location.reload();
+        fetch('/api/auth/sign_out')
+            .then(() => refreshStatus());
     }
 
     return (<Main>
