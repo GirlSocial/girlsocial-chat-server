@@ -1,7 +1,9 @@
 import {MongoClient} from "mongodb";
 import {generateToken} from "@/components/backend/password";
 
-export async function listSessions(token: string): Promise<string[] | null> {
+export async function listSessions(token: string): Promise<{
+    name: string
+}[] | null> {
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
 
@@ -19,7 +21,11 @@ export async function listSessions(token: string): Promise<string[] | null> {
     }
 
     await client.close();
-    return allSessions.map(x => x.sessionToken as string);
+    return allSessions.map(x => {
+        return {
+            name: x.sessionName ?? "Unnamed Session"
+        }
+    });
 }
 
 export async function createSession(user: string): Promise<string | null> {

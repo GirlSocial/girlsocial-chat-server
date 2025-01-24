@@ -46,8 +46,6 @@ export async function loginUser(username: string, password: string) {
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
 
-    let passwd = await hashPassword(password);
-
     let users = client.db('GirlSocial').collection('users');
     let user = await users.findOne({
         username
@@ -81,4 +79,3 @@ export async function userExists(username: string) {
     await client.close();
     return exists;
 }
-
