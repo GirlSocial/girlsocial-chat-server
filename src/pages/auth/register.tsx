@@ -2,6 +2,7 @@ import Main from "@/components/frontend/Main";
 import {Button, Input, Snackbar, Stack, Typography} from "@mui/joy";
 import Metadata from "@/components/frontend/Metadata";
 import {useState} from "react";
+import {useRouter} from "next/router";
 
 export default function () {
 
@@ -10,6 +11,8 @@ export default function () {
     const [confirmPassword, setConfirmPassword] = useState("");
 
     const [error, setError] = useState("");
+
+    const router = useRouter();
 
     const register = () => {
         setError("");
@@ -34,6 +37,9 @@ export default function () {
                 }).catch(y => {
                     setError(`Error: ${x.statusText}: ${y}`);
                 })
+            }
+            else {
+                router.push("/");
             }
         }).catch(x => {
             setError(`Error: ${x}`);
