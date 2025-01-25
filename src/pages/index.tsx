@@ -1,11 +1,14 @@
 import {useEffect, useState} from "react";
 import Main from "@/components/frontend/Main";
-import {Button, Stack, Typography} from "@mui/joy";
+import {Button, List, ListItem, ListItemButton, Stack, Typography} from "@mui/joy";
 import Link from "next/link";
 import {useRouter} from "next/router";
 
 export default function Home() {
     const [loginStatus, setLoginStatus] = useState<string>("Loading...");
+
+    // Channels
+    const [channelList, setChannelList] = useState<string[]>([]);
 
     const router = useRouter();
 
@@ -20,6 +23,10 @@ export default function Home() {
                 }
             })
             .catch(() => setLoginStatus("Not logged in"));
+
+        fetch('/api/channels')
+            .then(res => res.json())
+            .then(data => setChannelList(data));
     }
 
     useEffect(() => {
@@ -52,6 +59,17 @@ export default function Home() {
                     </>
                 )}
                 <Typography>To be done...</Typography>
+                <Typography level={'h2'}>Channels</Typography>
+                {channelList.length === 0 && <Typography>Empty...</Typography>}
+                <List>
+                    {channelList.map((channel) => (
+                        <Link href={`/${channel}`}>
+                            <ListItemButton>
+                                <Typography>{channel}</Typography>
+                            </ListItemButton>
+                        </Link>
+                    ))}
+                </List>
             </Stack>
         </Main>);
 }

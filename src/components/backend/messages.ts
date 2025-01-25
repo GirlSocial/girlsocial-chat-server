@@ -94,7 +94,7 @@ export async function listMessages(channel: string, limit: number) {
             }
         },
         {
-            '$orderBy': {
+            '$sort': {
                 createdAt: -1
             }
         },

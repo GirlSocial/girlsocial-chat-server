@@ -78,6 +78,31 @@ export async function getUsernameFromSession(session: string): Promise<string | 
     return userDoc.username;
 }
 
+
+export async function checkSessionValid(session: string) {
+    const client = new MongoClient(process.env.MONGODB_URI!);
+    await client.connect();
+
+    // Get session
+    const sessions = client.db('GirlSocial').collection('sessions');
+    const sessionDoc = await sessions.findOne({sessionToken: session});
+    if (!sessionDoc) {
+        await client.close();
+        return false;
+    }
+
+    const users = client.db('GirlSocial').collection('users');
+    const userDoc = await users.findOne({_id: sessionDoc.userID});
+    if (!userDoc) {
+        await client.close();
+        return false;
+    }
+
+    await client.close();
+    return true;
+}
+
+
 export async function invalidateSession(token: string): Promise<boolean> {
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();

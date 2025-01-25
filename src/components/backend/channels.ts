@@ -39,7 +39,7 @@ export async function nameToId(name: string): Promise<ObjectId | null> {
     return channelDoc._id;
 }
 
-export async function IdToName(id: ObjectId): Promise<string | null> {
+export async function idToName(id: ObjectId): Promise<string | null> {
 
     const client = new MongoClient(process.env.MONGODB_URI!);
     await client.connect();
@@ -65,4 +65,16 @@ export async function channelExists(name: string): Promise<boolean> {
     await client.close();
 
     return !!channelDoc;
+}
+
+export async function listChannels(): Promise<Array<string>> {
+    const client = new MongoClient(process.env.MONGODB_URI!);
+    await client.connect();
+
+    const channels = client.db('GirlSocial').collection('channels');
+    const channelsDocs = await channels.find().toArray();
+
+    await client.close();
+
+    return channelsDocs.map(x => x.name);
 }
