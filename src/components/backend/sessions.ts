@@ -88,3 +88,33 @@ export async function invalidateSession(token: string): Promise<boolean> {
     await client.close();
     return sessionDoc.deletedCount === 1;
 }
+
+export async function setSessionName(token: string, name: string): Promise<void> {
+    const client = new MongoClient(process.env.MONGODB_URI!);
+    await client.connect();
+
+    const sessions = client.db('GirlSocial').collection('sessions');
+    await sessions.updateOne({
+        sessionToken: {'$eq': token}
+    }, {
+        $set: {
+            sessionName: name
+        }
+    });
+
+    await client.close();
+}
+
+export async function getSessionName(token: string): Promise<string | null> {
+    const client = new MongoClient(process.env.MONGODB_URI!);
+    await client.connect();
+
+    const sessions = client.db('GirlSocial').collection('sessions');
+    const sessionDoc = await sessions.findOne({ sessionToken: token });
+    if (!sessionDoc) {
+        await client.close();
+        return null;
+    }
+
+    return sessionDoc.sessionName ?? 'Unnamed Session';
+}
