@@ -1,16 +1,35 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import Main from "@/components/frontend/Main";
-import {Button, List, ListItem, ListItemButton, Stack, Typography} from "@mui/joy";
+import { Button, List, ListItem, ListItemButton, Stack, Typography } from "@mui/joy";
 import Link from "next/link";
-import {useRouter} from "next/router";
+import { useRouter } from "next/router";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { listChannels } from "@/components/backend/channels";
 
-export default function Home() {
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+
+    const { token } = ctx.req.cookies;
+
+    if (!token) {
+        return {
+            props: {}
+        }
+    }
+
+    const channels = await listChannels();
+
+    return {
+        props: {
+            channels
+        }
+    }
+}
+
+export default function Home(props: InferGetServerSidePropsType<typeof getServerSideProps>) {
     const [loginStatus, setLoginStatus] = useState<string>("Loading...");
 
     // Channels
     const [channelList, setChannelList] = useState<string[]>([]);
-
-    const router = useRouter();
 
     const refreshStatus = () => {
         fetch('/api/auth/status')
@@ -20,6 +39,7 @@ export default function Home() {
                     setLoginStatus(`Logged in as ${data.username}`);
                 } else {
                     setLoginStatus("Not logged in");
+
                 }
             })
             .catch(() => setLoginStatus("Not logged in"));
@@ -30,7 +50,7 @@ export default function Home() {
     }
 
     useEffect(() => {
-       refreshStatus();
+        refreshStatus();
     }, []);
 
     const logOut = () => {
@@ -39,37 +59,38 @@ export default function Home() {
     }
 
     return (<Main>
-            <Stack spacing={1}>
-                <Typography level={'h1'}>GirlSocial</Typography>
-                {loginStatus.startsWith('Logged in as') && (
-                    <>
-                        <Typography>{`You are l${loginStatus.slice(1)}`}</Typography>
-                        <Button onClick={logOut} color={'danger'}>Log Out</Button>
-                    </>
-                )}
-                {loginStatus === 'Not logged in' && (
-                    <>
-                        <Typography>You are not logged in</Typography>
-                        <Link href={'/auth/sign_in'}>
-                            <Button>Log In</Button>
-                        </Link>
-                        <Link href={'/auth/register'}>
-                            <Button color={'neutral'}>Sign Up</Button>
-                        </Link>
-                    </>
-                )}
-                <Typography>To be done...</Typography>
+        <Stack spacing={1}>
+            <Typography level={'h1'}>GirlSocial</Typography>
+            {loginStatus.startsWith('Logged in as') && (
+                <>
+                    <Typography>{`You are l${loginStatus.slice(1)}`}</Typography>
+                    <Button onClick={logOut} color={'danger'}>Log Out</Button>
+                </>
+            )}
+            {loginStatus === 'Not logged in' && (
+                <>
+                    <Typography>You are not logged in</Typography>
+                    <Link href={'/auth/sign_in'}>
+                        <Button>Log In</Button>
+                    </Link>
+                    <Link href={'/auth/register'}>
+                        <Button color={'neutral'}>Sign Up</Button>
+                    </Link>
+                </>
+            )}
+            {props.channels && <>
                 <Typography level={'h2'}>Channels</Typography>
-                {channelList.length === 0 && <Typography>Empty...</Typography>}
+                {props.channels?.length === 0 && <Typography>Empty...</Typography>}
                 <List>
-                    {channelList.map((channel) => (
+                    {props.channels?.map((channel, index) => (
                         <Link href={`/${channel}`}>
                             <ListItemButton>
-                                <Typography>{channel}</Typography>
+                                {channel}
                             </ListItemButton>
                         </Link>
                     ))}
                 </List>
-            </Stack>
-        </Main>);
+            </>}
+        </Stack>
+    </Main>);
 }
