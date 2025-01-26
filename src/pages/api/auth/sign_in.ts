@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const token = await loginUser(username, password);
     if (!token) {
-        res.status(401).end();
+        res.status(401).json({'error': 'Invalid username or password'});
         return;
     }
 
