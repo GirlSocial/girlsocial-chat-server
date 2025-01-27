@@ -1,6 +1,20 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import Main from "@/components/frontend/Main";
-import {Button, List, ListItemButton, Stack, Typography} from "@mui/joy";
+import {
+    Button,
+    CircularProgress,
+    DialogTitle,
+    FormControl,
+    FormLabel,
+    Input,
+    List,
+    ListItemButton,
+    Modal,
+    ModalClose,
+    ModalDialog,
+    Stack,
+    Typography
+} from "@mui/joy";
 import Link from "next/link";
 import {GetServerSidePropsContext, InferGetServerSidePropsType} from "next";
 import {listChannels} from "@/components/backend/channels";
@@ -11,7 +25,9 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 
     if (!token) {
         return {
-            props: {}
+            props: {
+                channels: []
+            }
         }
     }
 
@@ -28,7 +44,7 @@ export default function Home(props: InferGetServerSidePropsType<typeof getServer
     const [loginStatus, setLoginStatus] = useState<string>("Loading...");
 
     // Channels
-    const [channelList, setChannelList] = useState<string[]>([]);
+    const [channelList, setChannelList] = useState<string[]>(props.channels);
 
     const refreshStatus = () => {
         fetch('/api/auth/status')
@@ -67,6 +83,44 @@ export default function Home(props: InferGetServerSidePropsType<typeof getServer
             .then(() => refreshStatus());
     }
 
+    const [showNewChannel, setShowNewChannel] = useState<boolean>(false);
+    const [newChannelName, setNewChannelName] = useState<string>("");
+    const [newChannelError, setNewChannelError] = useState<string>("");
+    const [newChannelLoading, setNewChannelLoading] = useState<boolean>(false);
+
+    const newChannel = () => {
+        setShowNewChannel(true);
+        setNewChannelName("");
+    }
+
+    const submitNewChannel = () => {
+        setNewChannelLoading(true);
+        fetch('/api/channels', {
+            method: "POST",
+            body: JSON.stringify({
+                name: newChannelName
+            }),
+            headers: {
+                'content-type': 'application/json'
+            }
+        }).then(x => {
+            setNewChannelLoading(false);
+            if (x.ok) {
+                setChannelList([...channelList, newChannelName]);
+                setShowNewChannel(false);
+            } else {
+                x.json().then(x => {
+                    setNewChannelError(`Error: ${x.error}`)
+                }).catch(x => {
+                    setNewChannelError(`Error: ${x.statusText} (${x.status})`)
+                })
+            }
+        }).catch(x => {
+            setNewChannelLoading(false);
+            setNewChannelError(`Error: ${x}`);
+        })
+    }
+
     return (<Main>
         <Stack spacing={1}>
             <Typography level={'h1'}>GirlSocial</Typography>
@@ -83,17 +137,46 @@ export default function Home(props: InferGetServerSidePropsType<typeof getServer
                     <Button color={'neutral'}>Sign Up</Button>
                 </Link>
             </>)}
-            {props.channels && <>
-                <Typography level={'h2'}>Channels</Typography>
-                {props.channels?.length === 0 && <Typography>Empty...</Typography>}
-                <List>
-                    {props.channels?.map((channel, index) => (<Link href={`/${channel}`}>
-                        <ListItemButton>
-                            {channel}
-                        </ListItemButton>
-                    </Link>))}
-                </List>
-            </>}
+
+            {channelList.length > 0 && (
+                <>
+                    <Typography level={'h2'}>Channels</Typography>
+
+                    <List>
+                        {channelList.map((channel) => (<Link href={`/${channel}`}>
+                            <ListItemButton>
+                                {channel}
+                            </ListItemButton>
+                        </Link>))}
+                    </List>
+                </>
+            )}
+
+            {/*Create channel button*/}
+            <Button onClick={newChannel}>New Channel</Button>
+
+            {/*Modal for creating a channel*/}
+            <Modal open={showNewChannel} onClose={() => {
+                if (!newChannelLoading) setShowNewChannel(false)
+            }}>
+                <ModalDialog>
+                    <ModalClose/>
+                    <DialogTitle>Create a channel</DialogTitle>
+                    <Stack spacing={1}>
+                        <FormControl>
+                            <FormLabel>Channel Name</FormLabel>
+                            <Input type={'text'} placeholder={'general...'} value={newChannelName}
+                                   onChange={x => setNewChannelName(x.currentTarget.value)}
+                                   disabled={newChannelLoading}/>
+                        </FormControl>
+                        {newChannelLoading ?
+                            <Button disabled startDecorator={<CircularProgress/>}>Creating...</Button>
+                            : <Button onClick={submitNewChannel}>New Channel</Button>}
+                        {newChannelError &&
+                            <Typography>{`An error occured: ${newChannelError}`}</Typography>}
+                    </Stack>
+                </ModalDialog>
+            </Modal>
         </Stack>
     </Main>);
 }
