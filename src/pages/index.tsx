@@ -128,6 +128,7 @@ export default function Home(props: InferGetServerSidePropsType<typeof getServer
                 <Typography>{`You are l${loginStatus.slice(1)}`}</Typography>
                 <Button onClick={logOut} color={'danger'}>Log Out</Button>
             </>)}
+
             {loginStatus === 'Not logged in' && (<>
                 <Typography>You are not logged in</Typography>
                 <Link href={'/auth/sign_in'}>
@@ -138,6 +139,7 @@ export default function Home(props: InferGetServerSidePropsType<typeof getServer
                 </Link>
             </>)}
 
+            {/*List of channels*/}
             {channelList.length > 0 && (
                 <>
                     <Typography level={'h2'}>Channels</Typography>

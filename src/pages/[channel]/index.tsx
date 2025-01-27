@@ -4,6 +4,7 @@ import Main from "@/components/frontend/Main";
 import { Button, Input, Stack, Typography } from "@mui/joy";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 
@@ -72,6 +73,11 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
     return <Main>
         <Typography level={'h1'}>{props.channel}</Typography>
         <Stack spacing={1}>
+
+            <Link href={'/'}>
+                <Button variant={'outlined'}>&lt; Back</Button>
+            </Link>
+
             {props.messages.map(msg => (
                 <Message user={msg.author} msg={msg.message} />
             ))}
