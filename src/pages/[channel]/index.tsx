@@ -46,10 +46,12 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
 
     const [input, setInput] = useState("");
     const [sendError, setSendError] = useState("");
+    const [sending, setSending] = useState(false);
 
     const router = useRouter();
 
     const sendMessage = () => {
+        setSending(true);
         fetch(`/api/${props.channel}/message`, {
             method: 'POST',
             headers: {
@@ -59,13 +61,16 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
                 message: input
             })
         }).then(x => {
+            setSending(false);
             if (x.ok) {
+                setInput("");
                 router.replace(`/${props.channel}`);
             }
             else {
                 setSendError(`Error: ${x.status} ${x.statusText}`)
             }
         }).catch(x => {
+            setSending(false);
             setSendError(`Error: ${x}`);
         })
     }
@@ -89,9 +94,15 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
             <Input
                 placeholder="Type a message..."
                 endDecorator={[
-                    <Button variant="plain" onClick={sendMessage}>Send</Button>
+                    <Button variant="plain" disabled={sending} onClick={sendMessage}>Send</Button>
                 ]}
                 value={input}
+                onKeyDown={x => {
+                    if (x.key === "Enter") {
+                        sendMessage();
+                    }
+                }}
+                disabled={sending}
                 onChange={x => setInput(x.currentTarget.value)}
             />
         </div>
