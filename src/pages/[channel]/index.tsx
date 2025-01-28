@@ -2,7 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { listMessages } from "@/components/backend/messages";
 import Main from "@/components/frontend/Main";
 import { Button, Input, Stack, Typography } from "@mui/joy";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 
@@ -50,6 +50,10 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
 
     const router = useRouter();
 
+    useEffect(() => {
+        window.scroll(0, window.outerHeight);
+    }, []);
+
     const sendMessage = () => {
         setSending(true);
         fetch(`/api/${props.channel}/message`, {
@@ -64,7 +68,8 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
             setSending(false);
             if (x.ok) {
                 setInput("");
-                router.replace(`/${props.channel}`);
+                router.replace(`/${props.channel}`).then(() =>
+                    window.scroll(0, window.outerHeight));
             }
             else {
                 setSendError(`Error: ${x.status} ${x.statusText}`)
@@ -87,6 +92,10 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
                 <Message user={msg.author} msg={msg.message} />
             ))}
         </Stack>
+
+        <br/>
+        <br/>
+        <br/>
 
         {/* Type a message dialog */}
         <div className="fixed bottom-1 w-2/3 my-2">
