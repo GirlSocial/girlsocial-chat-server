@@ -1,16 +1,19 @@
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { listMessages } from "@/components/backend/messages";
 import Main from "@/components/frontend/Main";
-import { Button, Input, Stack, Typography } from "@mui/joy";
-import {useEffect, useState} from "react";
+import { Button, Dropdown, Input, Menu, MenuItem, MenuList, Modal, ModalClose, ModalDialog, Stack, Typography } from "@mui/joy";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { ObjectId, WithId } from "mongodb";
+import { Popper } from '@mui/base/Popper'
+import { ClickAwayListener } from "@mui/base";
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 
     const { channel } = ctx.params as { channel: string };
 
-    const messages = await listMessages(channel, 100);
+    let messages = await listMessages(channel, 100);
 
     if (!messages) {
         return {
@@ -22,8 +25,10 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
         props: {
             messages: messages.map(x => {
                 return {
+                    id: x.id,
                     message: x.message,
-                    author: x.author
+                    author: x.author,
+                    replyTo: !!x.replyTo ? x.replyTo : null
                 }
             }),
             channel
@@ -31,13 +36,34 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     }
 }
 
-function Message(props: { user: string, msg: string }) {
+function Message(props: { user: string, msg: string, replyTo?: any, onReply: () => void }) {
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    const divRef = useRef<HTMLDivElement>(null);
+    function reply() {
+        props.onReply();
+        setMenuOpen(false);
+    }
+
     return (
         <>
-            <div className={'border-2 border-white rounded-md p-2 py-1'}>
-                <Typography fontWeight={'bolder'} className={'text-2xl'}>{props.user}</Typography>
-                <Typography>{props.msg}</Typography>
-            </div>
+            <Dropdown open={menuOpen} onOpenChange={(_, x) => setMenuOpen(x)}>
+                <div className={'border-2 border-white rounded-md p-2 py-1'} onClick={() => setMenuOpen(!menuOpen)} ref={divRef}>
+                    {props.replyTo && <Typography>{`Replying to ${props.replyTo.author}: ${props.replyTo.message}`}</Typography>}
+                    <Typography fontWeight={'bolder'} className={'text-2xl'}>{props.user}</Typography>
+                    <Typography>{props.msg}</Typography>
+                </div>
+                <Menu>
+                    <MenuItem onClick={props.onReply}>Reply...</MenuItem>
+                </Menu>
+            </Dropdown>
+            <Popper anchorEl={divRef.current} open={menuOpen} role={undefined} disablePortal modifiers={[{ name: 'offset', options: { offset: [0, 4] } }]}>
+                <ClickAwayListener onClickAway={() => setMenuOpen(false)}>
+                    <MenuList>
+                        <MenuItem onClick={reply}>Reply...</MenuItem>
+                    </MenuList>
+                </ClickAwayListener>
+            </Popper>
         </>
     )
 }
@@ -47,6 +73,10 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
     const [input, setInput] = useState("");
     const [sendError, setSendError] = useState("");
     const [sending, setSending] = useState(false);
+
+    const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
+    const replyingToUser = props.messages.find(x => x.id === replyingTo)?.author ?? "someone...";
 
     const router = useRouter();
 
@@ -62,12 +92,14 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                message: input
+                message: input,
+                replyingTo: replyingTo
             })
         }).then(x => {
             setSending(false);
             if (x.ok) {
                 setInput("");
+                setReplyingTo(null);
                 router.replace(`/${props.channel}`).then(() =>
                     window.scroll(0, window.outerHeight));
             }
@@ -88,18 +120,24 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
                 <Button variant={'outlined'}>&lt; Back</Button>
             </Link>
 
-            {props.messages.map(msg => (
-                <Message user={msg.author} msg={msg.message} />
-            ))}
+            {props.messages.map(msg => {
+                function replyToMessage() {
+                    setReplyingTo(msg.id);
+                }
+                return (
+                    <Message replyTo={msg.replyTo} user={msg.author} msg={msg.message} onReply={replyToMessage} />
+                )
+            })}
         </Stack>
 
-        <br/>
-        <br/>
-        <br/>
+        <br />
+        <br />
+        <br />
 
         {/* Type a message dialog */}
         <div className="fixed bottom-1 w-2/3 my-2">
             {sendError && <Typography color="danger">{sendError}</Typography>}
+            {replyingTo && <Typography>Replying to {replyingToUser}</Typography>}
             <Input
                 placeholder="Type a message..."
                 endDecorator={[
