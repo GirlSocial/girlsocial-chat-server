@@ -1,28 +1,11 @@
-# GirlSocial - A new social network with the focus on inclusivity
+# Give Up GitHub
 
-⚠️ WARNING: Very early in development! The app is NOT finished at all!
+This project has given up GitHub.  ([See Software Freedom Conservancy's *Give Up  GitHub* site for details](https://GiveUpGitHub.org).)
 
-GirlSocial will be an open source social platform unlike any other - with a focus on inclusivity.
+You can now find this project at [Codeberg](https://codeberg.org/mldchan/girlsocial-chat-server) and [Self-Hosted GitLab](https://git.mldchan.dev/girlsocial/server) instead.
 
-You will be able to use GirlSocial air-gapped - like any existing social network, or you'll be able to enable integrations with services like pronouns.page and the software will try it's hardest to avoid making other people uncomfortable.
+Any use of this project's code by GitHub Copilot, past or present, is done without our permission.  We do not consent to GitHub's use of this project's code in Copilot.
 
-## Planned Release Date?
+Join us; you can [give up GitHub](https://GiveUpGitHub.org) too!
 
-Unknown. We want to finish this as soon as we can, and have apps for all major platforms out.
-
-This is currently as of writing maintained by a single developer and support is welcome.
-
-## Development
-
-0. (this steps is recommended if you're going to contribute) Fork this repository.
-1. `cd server` and `npm install` to install dependencies.
-2. `docker-compose -f compose.dev.yaml up --watch --build` to start the development server.
-3. Make changes as desired.
-4. `docker-compose -f compose.dev.yaml down` to take down the development server.
-5. (step for anyone who forked) Commit and push to your forked repository and open a pull request.
-
-## Production
-
-To build this app for production use, go ahead and do the following:
-
-TODO: I'll make a separate repository which you can clone to get a prod ready environment.
+![Logo of the GiveUpGitHub campaign](https://sfconservancy.org/static/img/GiveUpGitHub.png)
