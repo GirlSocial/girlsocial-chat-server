@@ -2,7 +2,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { listMessages } from "@/components/backend/messages";
 import Main from "@/components/frontend/Main";
 import { Button, Dropdown, Input, Menu, MenuItem, MenuList, Modal, ModalClose, ModalDialog, Stack, Typography } from "@mui/joy";
-import { useEffect, useRef, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import { ObjectId, WithId } from "mongodb";
@@ -28,7 +28,8 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
                     id: x.id,
                     message: x.message,
                     author: x.author,
-                    replyTo: !!x.replyTo ? x.replyTo : null
+                    replyTo: !!x.replyTo ? x.replyTo : null,
+                    createdAt: x.createdAt.toISOString()
                 }
             }),
             channel
@@ -36,7 +37,7 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
     }
 }
 
-function Message(props: { user: string, msg: string, replyTo?: any, onReply: () => void }) {
+function Message(props: { user: string, msg: string, replyTo?: any, createdAt?: string, onReply: () => void }) {
     const [menuOpen, setMenuOpen] = useState(false);
 
     const divRef = useRef<HTMLDivElement>(null);
@@ -49,8 +50,11 @@ function Message(props: { user: string, msg: string, replyTo?: any, onReply: () 
         <>
             <Dropdown open={menuOpen} onOpenChange={(_, x) => setMenuOpen(x)}>
                 <div className={'border-2 border-white rounded-md p-2 py-1'} onClick={() => setMenuOpen(!menuOpen)} ref={divRef}>
-                    {props.replyTo && <Typography>{`Replying to ${props.replyTo.author}: ${props.replyTo.message}`}</Typography>}
-                    <Typography fontWeight={'bolder'} className={'text-2xl'}>{props.user}</Typography>
+                    {props.replyTo && <Typography fontSize={'small'}>{`Replying to ${props.replyTo.author}: ${props.replyTo.message}`}</Typography>}
+                    <Stack direction="row" alignItems={'center'}>
+                        <Typography fontWeight={'bolder'} className={'text-2xl'}>{props.user}</Typography>
+                        {props.createdAt && <Typography fontSize={'small'} marginLeft={'1rem'}>{props.createdAt}</Typography>}
+                    </Stack>
                     <Typography>{props.msg}</Typography>
                 </div>
                 <Menu>
@@ -70,6 +74,15 @@ function Message(props: { user: string, msg: string, replyTo?: any, onReply: () 
 
 export default function (props: InferGetServerSidePropsType<typeof getServerSideProps>) {
 
+    const [messages, setMessages] = useState<{
+        id: string;
+        message: string;
+        author: string;
+        createdAt: string;
+        replyTo: string | null;
+        formattedCreatedAt?: string;
+    }[]>(props.messages);
+
     const [input, setInput] = useState("");
     const [sendError, setSendError] = useState("");
     const [sending, setSending] = useState(false);
@@ -80,8 +93,23 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
 
     const router = useRouter();
 
+    const hasLoaded = useRef(false);
+
     useEffect(() => {
         window.scroll(0, window.outerHeight);
+
+        if (!hasLoaded.current) {
+            hasLoaded.current = true;
+            setMessages(
+                messages.map(x => {
+                    return {
+                        ...x,
+                        formattedCreatedAt: x.formattedCreatedAt ?? new Date(x.createdAt).toLocaleString()
+                    }
+                })
+            )
+            return;
+        }
     }, []);
 
     const sendMessage = () => {
@@ -120,12 +148,13 @@ export default function (props: InferGetServerSidePropsType<typeof getServerSide
                 <Button variant={'outlined'}>&lt; Back</Button>
             </Link>
 
-            {props.messages.map(msg => {
+            {messages.map(msg => {
                 function replyToMessage() {
                     setReplyingTo(msg.id);
                 }
+
                 return (
-                    <Message replyTo={msg.replyTo} user={msg.author} msg={msg.message} onReply={replyToMessage} />
+                    <Message replyTo={msg.replyTo} createdAt={msg.formattedCreatedAt} user={msg.author} msg={msg.message} onReply={replyToMessage} />
                 )
             })}
         </Stack>
