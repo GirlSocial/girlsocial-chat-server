@@ -1,5 +1,7 @@
 # GirlSocial - A new social network with the focus on inclusivity
 
+> We track issues on our own Git server. Please see the [issues](https://code.mldchan.dev/mld/girlsocial-chat-server/issues) and [pull requests](https://code.mldchan.dev/mld/girlsocial-chat-server/pulls). Note that everything will be mirrored here and I'll manually pull changes over to the Git server if they are made here.
+
 ⚠️ WARNING: Very early in development! The app is NOT finished at all!
 
 GirlSocial will be an open source social platform unlike any other - with a focus on inclusivity.
